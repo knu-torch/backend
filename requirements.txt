@@ -3,4 +3,4 @@ python-multipart
 uvicorn
 fpdf
 pydantic
-openai
+google-generativeai
