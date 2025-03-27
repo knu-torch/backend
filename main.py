@@ -6,19 +6,25 @@ import os
 import zipfile
 import json
 
-from openai import OpenAI
+from google.generativeai import configure, GenerativeModel
 from fpdf import FPDF
 import uvicorn
+import google.generativeai as genai
 
-client = OpenAI(api_key="")
+
+# 환경 변수로 API 키 설정
+os.environ["GEMINI_API_KEY"] = "AIzaSyAlX1D_kIgCvoXXU72JgltquG8zWX2xu7Y"
+configure(api_key=os.getenv("GEMINI_API_KEY"))
+gemini_model = GenerativeModel("gemini-2.0-flash")
+# for model in genai.list_models():
+#     print(model.name, model.supported_generation_methods)
+
 app = FastAPI(debug=True)
-
 
 class APIOption(BaseModel):
     language: str = None
     detail_level: str = None
     include_comments: bool = False
-
 
 # PDF 파일 생성 함수
 def create_pdf(summary_text: str, output_path: str):
@@ -35,8 +41,7 @@ def create_pdf(summary_text: str, output_path: str):
 
     pdf.output(output_path)
 
-
-# 입력 zip파일 압축 해제 및 코드 내용 합치기
+# 압축 해제 및 코드 수집
 def extract_and_collect_code(zip_path: str, extract_to: str) -> tuple[str, list[str]]:
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_to)
@@ -60,7 +65,6 @@ def extract_and_collect_code(zip_path: str, extract_to: str) -> tuple[str, list[
 
     return code_contents, filenames
 
-
 @app.post("/summarize")
 async def summarize_zip_project(
         text: str = Form(...),
@@ -76,36 +80,29 @@ async def summarize_zip_project(
         f.write(await zip_file.read())
 
     code_text, file_list = extract_and_collect_code(zip_path, os.path.join(temp_dir, "extracted"))
-
     parsed_options = APIOption(**json.loads(options))
 
-    # 프롬프트 (AI 파트와 협의 필요)
     prompt = f"""
-        사용자가 작성한 프로젝트에 대한 설명: {text}
+사용자가 작성한 프로젝트에 대한 설명: {text}
 
-        옵션:
-        {parsed_options}
+옵션:
+{parsed_options}
 
-        총 {len(file_list)}개의 코드 파일이 포함되어 있습니다.
-        파일 목록: {', '.join(file_list[:10])} {'...외 다수' if len(file_list) > 10 else ''}
+총 {len(file_list)}개의 코드 파일이 포함되어 있습니다.
+파일 목록: {', '.join(file_list[:10])} {'...외 다수' if len(file_list) > 10 else ''}
 
-        파일 내용:
-        {code_text[:15000]}
+파일 내용:
+{code_text[:50000]}
 
-        이 프로젝트는 어떤 구조이고, 무엇을 수행하며, 주요 컴포넌트는 어떤 것들인지 요약해줘.
-    """
+이 프로젝트는 어떤 구조이고, 무엇을 수행하며, 주요 컴포넌트는 어떤 것들인지 요약해줘.
+"""
 
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "당신은 소프트웨어 프로젝트 구조를 요약하는 AI입니다."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7
-    )
-    summary = response.choices[0].message.content.strip()
+    try:
+        response = gemini_model.generate_content(prompt)
+        summary = response.text.strip()
+    except Exception as e:
+        summary = f"Gemini 요약 중 오류 발생: {e}"
 
-    # PDF
     pdf_path = os.path.join(temp_dir, f"{session_id}_summary.pdf")
     create_pdf(summary, pdf_path)
 
@@ -114,7 +111,6 @@ async def summarize_zip_project(
         media_type="application/pdf",
         filename="project_summary.pdf"
     )
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
