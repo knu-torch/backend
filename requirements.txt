@@ -4,3 +4,4 @@ uvicorn
 fpdf
 pydantic
 google-generativeai
+pymysql
