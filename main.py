@@ -2,6 +2,9 @@ from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
 from fpdf import FPDF
 from pydantic import BaseModel
+from db.connection import SessionDep
+import model.entity.request 
+from sqlmodel import select
 import uuid
 import os
 import zipfile
@@ -15,6 +18,8 @@ from ai import AI
 # 디렉토리 path, check box option 2개만 ai에 전달
 
 import uvicorn
+
+import model.entity.request
 
 app = FastAPI(debug=True)
 
@@ -101,6 +106,31 @@ async def re(
     finally:
         conn.close()
 
+@app.get("/req")
+async def root(db_ctx: SessionDep):
+    
+    
+    statement = select(model.entity.request.Request)
+    results = db_ctx.exec(statement)
+    
+    for hero in results:
+        print(hero)
+    
+    
+    return {"message": "Hello World"}
+
+
+@app.post("/req")
+async def root(db_ctx: SessionDep):
+    newReq = model.entity.request.Request(
+        status="pending"
+    )
+    
+    db_ctx.add(newReq)
+    db_ctx.commit()
+    
+    
+    return {"message": "Hello World"}
 
 
 
