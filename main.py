@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.responses import FileResponse
 from fpdf import FPDF
 from pydantic import BaseModel
+from handler import summary_handler
 import uuid
 import os
 import zipfile
@@ -16,7 +17,10 @@ from ai import AI
 
 import uvicorn
 
-app = FastAPI(debug=True)
+app = FastAPI(debug=True, docs_url="/api/docs",
+              title="AI Project Reviewer")
+
+
 
 class APIOption(BaseModel):
     language: str = None
@@ -102,6 +106,13 @@ async def re(
         conn.close()
 
 
+@app.get("/api/healthCheck")
+async def healthCheckHandler():
+    return { "message" : "OK" }
+    
+app.include_router(
+    summary_handler.router
+)
 
 
 if __name__ == "__main__":
