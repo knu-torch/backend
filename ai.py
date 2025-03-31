@@ -5,4 +5,8 @@ def AI(
     option: list[summary_options.SummaryOption]
 ):
 
-    return
+    return {
+        'title' : "title",
+        'libs': "libs",
+        'deploy_info': "deploy_info"
+    }
