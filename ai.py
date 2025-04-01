@@ -1,4 +1,5 @@
 from model.enums import summary_options
+from ai_module import AI
 
 def AI(
     dir_path: str,
