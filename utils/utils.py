@@ -1,5 +1,5 @@
 from fpdf import FPDF
-
+import platform
 
 # pdf 파일 생성 및 저장
 def create_pdf(summary_text: str, output_path: str):
@@ -7,7 +7,13 @@ def create_pdf(summary_text: str, output_path: str):
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
 
-    font_path = "C:/Windows/Fonts/malgun.ttf"
+    if platform.system() == "Windows":
+        font_path = "C:/Windows/Fonts/malgun.ttf"
+    elif platform.system() == "Darwin":  # macOS
+        font_path = "/Library/Fonts/Arial Unicode.ttf"
+    else:  # Linux
+        font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+
     pdf.add_font("malgun", "", font_path, uni=True)
     pdf.set_font("malgun", size=12)
 
