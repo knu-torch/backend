@@ -4,4 +4,6 @@ from enum import Enum
 class SummaryOption(str, Enum):
     Project = "project"
     Package = "package"
-
+    Title = "title"
+    Libs = "libs"
+    Deploy_info = "deploy_info"
