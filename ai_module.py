@@ -14,7 +14,7 @@ def extract_code_from_zip(zip_path: str) -> str:
     extracted_code = []
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         for file_name in zip_ref.namelist():
-            if not file_name.endswith('/'):  # 디렉토리 제외
+            if not file_name.endswith('/'):
                 with zip_ref.open(file_name) as file:
                     try:
                         extracted_code.append(f"### {file_name}\n" + file.read().decode("utf-8", errors="ignore"))
@@ -60,5 +60,5 @@ def AI(zip_path: str, options: list[summary_options.SummaryOption]) -> str:
     return summarize_code(extracted_code, options)
 
 if __name__ == "__main__":
-    option=[summary_options.SummaryOption.Project]
-    print(AI("tests/sample_project.zip", option))
+    options = [summary_options.SummaryOption.Project]
+    print(AI(zip_path = "tests/sample_project.zip", options = options))
