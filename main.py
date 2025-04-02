@@ -9,7 +9,7 @@ import zipfile
 import json
 import requests
 import pymysql
-from ai import AI
+from ai_module import AI
 
 import uvicorn
 
