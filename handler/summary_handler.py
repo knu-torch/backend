@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 
 from model.payload import summary
 from utils.utils import create_pdf
-from ai import AI
+from ai_module import AI
 from db.connection import SessionDep, engine
 from model.entity.summary_request import SummaryRequestEntity
 from model.entity.summary_project import SummaryProjectEntity
