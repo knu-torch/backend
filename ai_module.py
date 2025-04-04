@@ -55,13 +55,23 @@ def summarize_code(code_text: str, options: list[summary_options.SummaryOption])
     except Exception as e:
         return f"요약 중 오류 발생: {e}"
 
-def AI(zip_path: str, options: list[summary_options.SummaryOption]) -> str:
+def AI(zip_path: str, options: list[summary_options.SummaryOption]) -> dict:
     extracted_code = extract_code_from_zip(zip_path)
     
     if extracted_code == "코드 파일이 없습니다.":
         return "ZIP 파일 내에 코드 파일이 없습니다."
     
-    return summarize_code(extracted_code, options)
+    #return summarize_code(extracted_code, options)
+
+    # 리턴값 참고용
+    summary_dict = {
+        'title': "",
+        "libs": "",
+        "deploy_info": ""
+    }
+
+    return summary_dict
+
 
 if __name__ == "__main__":
     options = [summary_options.SummaryOption.Project]
