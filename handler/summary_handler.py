@@ -117,8 +117,8 @@ async def post_summary_request_handler(
     }
 
 
-
-@router.get("/{request_id}")
+# /request_id/result
+@router.get("/download/{request_id}")
 async def get_summary_result(
         request_id: str,
         session: SessionDep,
