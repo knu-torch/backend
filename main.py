@@ -12,9 +12,27 @@ import pymysql
 from ai_module import AI
 
 import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(debug=True, docs_url="/api/docs",
-              title="AI Project Reviewer")
+app = FastAPI(debug=True)
+
+# 허용할 Origin (프론트 주소)
+origins = [
+    "http://localhost:3000",   # React 등 프론트엔드 개발 서버
+    "http://127.0.0.1:3000",   # 다른 로컬 주소
+    "https://your-domain.com"  # 실제 배포 주소
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],            # 👈 허용할 도메인
+    allow_credentials=True,
+    allow_methods=["*"],              # 👈 모든 HTTP 메서드 허용 (GET, POST 등)
+    allow_headers=["*"],              # 👈 모든 헤더 허용
+)
+# # app = FastAPI(debug=True, docs_url="/api/docs",
+#               title="AI Project Reviewer")
 
 
 
