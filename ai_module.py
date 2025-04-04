@@ -32,7 +32,7 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
             "- git action이나 서비스 파일을 분석하여 배포 관련 정보를 알려줘."
             "- 한국어로 작성해줘."
             "- 마크다운 형식으로 작성해줘."
-            "- title, libs, deploy_info, another 영역으로 나눠서 작성해줘."
+            "- title, libs, deploy_info 영역으로 순서대로 나눠서 작성해줘. title, libs, deploy_info 앞에 ## 이거 붙이고 한칸 띄워줘."
         )
 
     if summary_options.SummaryOption.Package in options:
@@ -42,37 +42,55 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
             "- 외부 라이브러리는 제외해줘."
             "- 한국어로 작성해줘."
             "- 마크다운 형식으로 작성해줘."
-            "- title, libs, deploy_info, another 영역으로 나눠서 작성해줘."
+            "- title, libs, deploy_info 영역으로 순서대로 나눠서 작성해줘. title, libs, deploy_info 앞에 ## 이거 붙이고 한칸 띄워줘."
         )
 
     return "\n".join(prompts) + f"\n\n{code_text}"
 
-def summarize_code(code_text: str, options: list[summary_options.SummaryOption]) -> str:
+def parse_markdown_sections(text: str) -> dict:
+    sections = {"title": "", "libs": "", "deploy_info": ""}
+    current_section = None
+    buffer = []
+
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith("## "):
+            if current_section in sections:
+                sections[current_section] = "\n".join(buffer).strip()
+            current_section = line[3:].strip().lower()  
+            buffer = []
+        else:
+            buffer.append(line)
+
+    if current_section in sections:
+        sections[current_section] = "\n".join(buffer).strip()
+
+    return {
+        "title": sections["title"],
+        "libs": sections["libs"],
+        "deploy_info": sections["deploy_info"]
+    }
+
+def summarize_code(code_text: str, options: list[summary_options.SummaryOption]) -> dict:
     prompt = generate_prompt(options, code_text)
     try:
         response = gemini_model.generate_content(prompt)
-        return response.text.strip() if response else "요약 생성 실패"
+        if response:
+            return parse_markdown_sections(response.text)
+        else:
+            return {"title": "", "libs": "", "deploy_info": ""}
     except Exception as e:
-        return f"요약 중 오류 발생: {e}"
+        return {"title": "", "libs": "", "deploy_info": f"요약 중 오류 발생: {e}"}
 
 def AI(zip_path: str, options: list[summary_options.SummaryOption]) -> dict:
     extracted_code = extract_code_from_zip(zip_path)
     
     if extracted_code == "코드 파일이 없습니다.":
-        return "ZIP 파일 내에 코드 파일이 없습니다."
+        return {"title": "", "libs": "", "deploy_info": "ZIP 파일 내에 코드 파일이 없습니다."}
     
-    #return summarize_code(extracted_code, options)
-
-    # 리턴값 참고용
-    summary_dict = {
-        'title': "",
-        "libs": "",
-        "deploy_info": ""
-    }
-
-    return summary_dict
-
+    return summarize_code(extracted_code, options)
 
 if __name__ == "__main__":
     options = [summary_options.SummaryOption.Project]
-    print(AI(zip_path = "tests/sample_project.zip", options = options))
+    result = AI(zip_path="../../../a.zip", options=options)
+    print("🔸 결과 출력:", result)
