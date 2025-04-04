@@ -31,6 +31,8 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
             "- 사용된 라이브러리 종류와 버전 정보를 알려줘.\n"
             "- git action이나 서비스 파일을 분석하여 배포 관련 정보를 알려줘."
             "- 한국어로 작성해줘."
+            "- 마크다운 형식으로 작성해줘."
+            "- title, libs, deploy_info, another 영역으로 나눠서 작성해줘."
         )
 
     if summary_options.SummaryOption.Package in options:
@@ -39,6 +41,8 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
             "- 프로젝트에서 사용된 패키지들의 상호의존성을 보여줘.\n"
             "- 외부 라이브러리는 제외해줘."
             "- 한국어로 작성해줘."
+            "- 마크다운 형식으로 작성해줘."
+            "- title, libs, deploy_info, another 영역으로 나눠서 작성해줘."
         )
 
     return "\n".join(prompts) + f"\n\n{code_text}"
