@@ -5,7 +5,7 @@ import os
 import zipfile
 from io import BytesIO
 from datetime import datetime
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_
 
 from model.payload import summary
 from utils.utils import create_pdf
@@ -23,12 +23,12 @@ router = APIRouter(
 )
 
 # AI 실행 함수
-def run_ai(temp_dir, options, db_id):
+def run_ai(file_dir, options, db_id):
     summary_result = {}
     status = ""
 
     try:
-        summary_result = AI(temp_dir, options)
+        summary_result = AI(file_dir, options)
         status = "done"
         with Session(engine) as session:
             request_obj = session.get(SummaryRequestEntity, int(db_id))
@@ -93,19 +93,23 @@ async def post_summary_request_handler(
     file_size = len(file_bytes)
 
     # zip 용량에 따른 처리 차별
-    if file_size <= MAX_MEMORY_ZIP_SIZE:
-        file_stream = BytesIO(file_bytes)
-        with zipfile.ZipFile(file_stream, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir)
-    else:
-        file_path = os.path.join(temp_dir, form_data.project_file.filename)
-        with open(file_path, "wb") as f:
-            f.write(file_bytes)
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(temp_dir)
+    # if file_size <= MAX_MEMORY_ZIP_SIZE:
+    #     file_stream = BytesIO(file_bytes)
+    #     with zipfile.ZipFile(file_stream, 'r') as zip_ref:
+    #         zip_ref.extractall(temp_dir)
+    # else:
+    #     file_path = os.path.join(temp_dir, form_data.project_file.filename)
+    #     with open(file_path, "wb") as f:
+    #         f.write(file_bytes)
+    #     with zipfile.ZipFile(file_path, 'r') as zip_ref:
+    #         zip_ref.extractall(temp_dir)
+
+    file_path = os.path.join(temp_dir, form_data.project_file.filename)
+    with open(file_path, "wb") as f:
+        f.write(file_bytes)
 
     # llm 처리, db 저장
-    background_tasks.add_task(run_ai, temp_dir, form_data.summary_options, db_id)
+    background_tasks.add_task(run_ai, file_path, form_data.summary_options, db_id)
 
     base_url = str(request.base_url).rstrip("/")
     result_url = f"{base_url}/summary/{request_id}"
@@ -124,7 +128,18 @@ async def get_summary_result(
         session: SessionDep,
 ):
 
-    statement = select(SummaryProjectEntity).where(SummaryProjectEntity.req_id == request_id)
+    # statement = select(SummaryProjectEntity).where(SummaryProjectEntity.req_id == request_id)
+    from sqlmodel import Session, select, or_
+
+    statement = (
+        select(SummaryProjectEntity)
+        .join(SummaryRequestEntity, SummaryProjectEntity.req_id == SummaryRequestEntity.req_id)
+        .where(
+            SummaryProjectEntity.req_id == request_id,
+            SummaryRequestEntity.status == "done"
+        )
+    )
+
     summary_data = session.exec(statement).first()
 
     if not summary_data:
