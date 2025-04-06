@@ -7,7 +7,8 @@ def AI(
 ):
     
     return {
-        'title' : "title",
-        'libs': "libs",
-        'deploy_info': "deploy_info"
+        "title" : "title",
+        "libs": "libs",
+        "deploy_info": "deploy_info",
+        "another": "another"
     }

@@ -176,3 +176,6 @@ cython_debug/
 # venv
 .venv/*
 /temp/
+
+# env
+.env
