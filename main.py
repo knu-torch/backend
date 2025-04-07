@@ -26,10 +26,11 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],            # 👈 허용할 도메인
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],              # 👈 모든 HTTP 메서드 허용 (GET, POST 등)
-    allow_headers=["*"],              # 👈 모든 헤더 허용
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["Status"],
 )
 # # app = FastAPI(debug=True, docs_url="/api/docs",
 #               title="AI Project Reviewer")
