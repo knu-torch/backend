@@ -1,6 +1,7 @@
 import os
 import zipfile
-from google.generativeai import configure, GenerativeModel
+from tkinter import filedialog
+from google import genai
 from model.enums import summary_options
 
 
@@ -62,15 +63,6 @@ def analyze_project(project_data): # 프롬프트 생각하기 체크박스같�
         contents=prompt
     )
     return response.text
-
-def select_zip_file():
-    root = tk.Tk()
-    root.withdraw()  # GUI 창 숨기기
-    zip_file_path = filedialog.askopenfilename(
-        title="ZIP 파일 선택",
-        filetypes=[("ZIP Files", "*.zip")]  # ZIP 파일만 선택할 수 있도록 필터 설정
-    )
-    return zip_file_path
 
 def parse_markdown_sections(text: str) -> dict:
     sections = {"title": "", "libs": "", "deploy_info": "", "another": ""}
