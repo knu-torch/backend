@@ -28,8 +28,9 @@ def test_summary_upload():
 
 if __name__ == "__main__":
     test_summary_upload()
-    request_id = "2144ed06-9943-4fb2-8072-98b1dc3f5e4a"
 
+    request_id = "dd5bfa0c-e7dc-4a76-8105-09790cb73490"
+    request_id = input(">>")
     # 요청
     response = client.get(f"/summary/download/{request_id}")
 
@@ -42,3 +43,4 @@ if __name__ == "__main__":
     # PDF 저장 확인용
     with open(f"saved_{request_id}.pdf", "wb") as out_f:
         out_f.write(response.content)
+    print(response.headers.get("Status"))

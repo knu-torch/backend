@@ -112,7 +112,7 @@ async def post_summary_request_handler(
     background_tasks.add_task(run_ai, file_path, form_data.summary_options, db_id)
 
     base_url = str(request.base_url).rstrip("/")
-    result_url = f"{base_url}/summary/{request_id}"
+    result_url = f"{base_url}/summary/download/{request_id}"
 
     return {
         "message" : "OK",
@@ -122,35 +122,45 @@ async def post_summary_request_handler(
 
 
 # /request_id/result
+# TODO : status 값을 다루는 Entity나 Enum class 생성 (not str)
 @router.get("/download/{request_id}")
 async def get_summary_result(
         request_id: str,
         session: SessionDep,
 ):
 
-    # statement = select(SummaryProjectEntity).where(SummaryProjectEntity.req_id == request_id)
-    from sqlmodel import Session, select, or_
+    summary_query = select(SummaryProjectEntity).where(SummaryProjectEntity.req_id == request_id)
+    status_query = select(SummaryRequestEntity.status).where(SummaryRequestEntity.req_id == request_id)
 
-    statement = (
-        select(SummaryProjectEntity)
-        .join(SummaryRequestEntity, SummaryProjectEntity.req_id == SummaryRequestEntity.req_id)
-        .where(
-            SummaryProjectEntity.req_id == request_id,
-            SummaryRequestEntity.status == "done"
-        )
-    )
+    summary_data = session.exec(summary_query).first()
+    status = session.exec(status_query).first()
 
-    summary_data = session.exec(statement).first()
+    # statement = (
+    #     select(SummaryProjectEntity)
+    #     .join(SummaryRequestEntity, SummaryProjectEntity.req_id == SummaryRequestEntity.req_id)
+    #     .where(
+    #         SummaryProjectEntity.req_id == request_id,
+    #         SummaryRequestEntity.status == "done"
+    #     )
+    # )
 
-    if not summary_data:
-        raise HTTPException(status_code=404, detail="Summary data not found for the given request_id")
+    # done일 경우에는 summary_data가 있지만, 아닐 경우에는 summary_data가 비어 있음, AI가 완료되지 않아 db에 값을 넣지 못했기 떄문
+    if not status:
+        raise HTTPException(status_code=404, detail="Request ID not found.")
 
     pdf_path = f"temp/{request_id}/{SUMMARY_RESULT_FILE_NAME}"
 
-    create_pdf(str(summary_data), pdf_path)
+    if status == 'done':
+        create_pdf(str(summary_data), pdf_path)
+    else:
+        create_pdf("", pdf_path)
 
-    return FileResponse(
+    response = FileResponse(
         pdf_path,
         media_type="application/pdf",
         filename=SUMMARY_RESULT_FILE_NAME
     )
+
+    response.headers["Status"] = status  # "done" or "running" or "pedding"
+
+    return response
