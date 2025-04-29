@@ -4,3 +4,5 @@ from enum import Enum
 class SummaryOption(str, Enum):
     Project = "ProjectSummary"
     Package = "DirectorySummary"
+    File = "FileSummay"
+    Function = "FunctionSummary"
