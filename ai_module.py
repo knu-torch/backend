@@ -6,7 +6,7 @@ from model.enums import summary_options
 def setup_gemini():
     os.environ["GEMINI_API_KEY"] = "AIzaSyBCDzf3655Cj29hdtPsbd65b-V2bpHMoKI"
     configure(api_key=os.getenv("GEMINI_API_KEY"))
-    return GenerativeModel("gemini-2.0-flash")
+    return GenerativeModel("models/gemini-2.5-flash-preview-04-17")
 
 gemini_model = setup_gemini()
 
@@ -29,7 +29,7 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
         prompts.append(
             "다음은 코드 분석 요약 요청입니다. 반드시 아래와 같은 마크다운 형식으로 출력해 주세요:\n\n"
             "## title\n"
-            "이 프로젝트의 핵심 기능과 목적을 한 줄로 요약\n\n"
+            "- 이 프로젝트의 핵심 기능과 목적을 한 줄로 요약\n\n"
             "## libs\n"
             "- 사용된 주요 라이브러리 및 프레임워크\n"
             "- 각 라이브러리의 버전 정보\n"
@@ -58,11 +58,40 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
             "- 트리 구조 또는 표 형태로 제공\n\n"
             "모든 섹션을 반드시 포함해주세요. 정보가 없으면 '해당 없음'으로 작성해주세요."
         )
+    
+    if summary_options.SummaryOption.File in options:
+        prompts.append(
+            "다음은 파일 단위 요약 요청입니다. 반드시 아래와 같은 마크다운 형식으로 출력해 주세요:\n\n"
+            "## title\n"
+            "- 각 파일 이름과 해당 파일의 기능을 1~2줄로 요약\n"
+            "- 표 형식으로 제공\n\n"
+            "## libs\n"
+            "해당 없음\n\n"
+            "## deploy_info\n"
+            "해당 없음\n\n"
+            "## another\n"
+            "- 내부 모듈 간 상호작용 (있다면)\n\n"
+            "모든 섹션을 반드시 포함해주세요. 정보가 없으면 '해당 없음'으로 작성해주세요."
+        )
 
+    if summary_options.SummaryOption.Function in options:
+        prompts.append(
+            "다음은 함수 단위 요약 요청입니다. 반드시 아래와 같은 마크다운 형식으로 출력해 주세요:\n\n"
+            "## title\n"
+            "- 함수 이름과 해당 함수의 역할을 1~2줄로 요약\n"
+            "- 표 형식으로 제공\n\n"
+            "## libs\n"
+            "해당 없음\n\n"
+            "## deploy_info\n"
+            "해당 없음\n\n"
+            "## another\n"
+            "- 함수 간 호출 관계 (있다면 함수 호출 트리로 표현)\n\n"
+            "모든 섹션을 반드시 포함해주세요. 정보가 없으면 '해당 없음'으로 작성해주세요."
+        )
+    
     return "\n\n" + "\n\n".join(prompts) + f"\n\n{code_text}"
 
 def parse_markdown_sections(text: str) -> dict:
-    print(text)
     sections = {"title": "", "libs": "", "deploy_info": "", "another": ""}
     current_section = None
     buffer = []
@@ -102,6 +131,6 @@ def AI(zip_path: str, options: list[summary_options.SummaryOption]) -> dict:
     return summarize_code(extracted_code, options)
 
 if __name__ == "__main__":
-    options = [summary_options.SummaryOption.Package]
+    options = [summary_options.SummaryOption.Function]
     result = AI(zip_path="../../a.zip", options=options)
     print(result)
