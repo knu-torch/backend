@@ -110,7 +110,8 @@ async def post_summary_request_handler(
         req_id = request_id,
         create_at=datetime.utcnow(),
         status="running",
-        options=form_data.summary_options
+        options=form_data.summary_options,
+        file_dir=file_path
     )
     session.add(new_request)
     session.commit()
