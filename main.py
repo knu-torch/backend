@@ -62,6 +62,11 @@ app.include_router(
     summary_handler.router
 )
 
+from worker.worker import worker
+from threading import Thread
 
 if __name__ == "__main__":
+    thread = Thread(target=worker)
+    thread.daemon = True
+    thread.start()
     uvicorn.run(app, host="0.0.0.0", port=8000)
