@@ -10,6 +10,8 @@ def setup_gemini():
 
 gemini_model = setup_gemini()
 
+#================================= AI Functions ================================
+
 def extract_code_from_zip(zip_path: str) -> str:
     extracted_code = []
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
@@ -122,6 +124,9 @@ def summarize_code(code_text: str, options: list[summary_options.SummaryOption])
     except Exception as e:
         return {"title": "", "libs": "", "deploy_info": "", "another": f"요약 중 오류 발생: {e}"}
 
+
+#================================= Extern ================================
+
 def AI(zip_path: str, options: list[summary_options.SummaryOption]) -> dict:
     extracted_code = extract_code_from_zip(zip_path)
 
@@ -130,6 +135,7 @@ def AI(zip_path: str, options: list[summary_options.SummaryOption]) -> dict:
 
     return summarize_code(extracted_code, options)
 
+# for test
 if __name__ == "__main__":
     options = [summary_options.SummaryOption.Function]
     result = AI(zip_path="../../a.zip", options=options)

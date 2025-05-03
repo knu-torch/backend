@@ -1,15 +1,5 @@
-from fastapi import FastAPI, UploadFile, File, Form, Request
-from fastapi.responses import FileResponse
-from fpdf import FPDF
-from pydantic import BaseModel
+from fastapi import FastAPI
 from handler import summary_handler
-import uuid
-import os
-import zipfile
-import json
-import requests
-import pymysql
-from ai_module import AI
 
 import uvicorn
 from fastapi import FastAPI
@@ -52,7 +42,6 @@ option이랑 zip_file받으면,
 request_id를 key로 해서 db에 조회하고, return
 """
 # 디렉토리 path, check box option 2개만 ai에 전달
-
 
 @app.get("/api/healthCheck")
 async def healthCheckHandler():

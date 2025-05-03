@@ -12,6 +12,8 @@ from ai_module import AI
 
 load_dotenv()
 
+#================================= Run AI ================================
+
 def run_ai(file_dir, options, db_id):
     summary_result = {}
     status = ""
@@ -50,18 +52,11 @@ def run_ai(file_dir, options, db_id):
         session.add(new_request)
         session.commit()
         session.refresh(new_request)
+        
 
-def worker():
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host=os.getenv("RABBITMQ_HOST"), port=os.getenv("RABBITMQ_PORT"))
-    )
-    channel = connection.channel()
+#================================= Callback for message ================================
 
-    channel.queue_declare(queue='task_queue', durable=True)
-    print(' [*] Waiting for messages. To exit press CTRL+C')
-
-
-    def callback(ch, method, properties, body):
+def callback(ch, method, properties, body):
         print(f" [x] Received {body.decode()}")
         
         request_id = body.decode()
@@ -80,6 +75,17 @@ def worker():
         print(" [x] Done")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+
+#================================= MessageConsumer ================================
+
+def worker():
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host=os.getenv("RABBITMQ_HOST"), port=os.getenv("RABBITMQ_PORT"))
+    )
+    channel = connection.channel()
+
+    channel.queue_declare(queue='task_queue', durable=True)
+    print(' [*] Waiting for messages. To exit press CTRL+C')
 
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='task_queue', on_message_callback=callback)
