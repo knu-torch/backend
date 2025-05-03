@@ -7,6 +7,9 @@ from io import BytesIO
 from datetime import datetime
 from sqlmodel import Session, select, or_
 
+import pika
+from dotenv import load_dotenv
+
 from model.payload import summary
 from utils.utils import create_pdf
 from ai_module import AI
@@ -21,6 +24,8 @@ router = APIRouter(
     prefix="/summary",
     tags=["summary"]
 )
+
+load_dotenv()
 
 # AI 실행 함수
 def run_ai(file_dir, options, db_id):
@@ -77,7 +82,12 @@ async def post_summary_request_handler(
     request_id = str(uuid.uuid4())
 
     # 요청 생성
-    new_request = SummaryRequestEntity(req_id = request_id,create_at=datetime.utcnow(), status="running")
+    new_request = SummaryRequestEntity(
+        req_id = request_id,
+        create_at=datetime.utcnow(),
+        status="running",
+        options=form_data.summary_options
+    )
     session.add(new_request)
     session.commit()
     session.refresh(new_request)
@@ -108,9 +118,24 @@ async def post_summary_request_handler(
     with open(file_path, "wb") as f:
         f.write(file_bytes)
 
-    # llm 처리, db 저장
-    background_tasks.add_task(run_ai, file_path, form_data.summary_options, db_id)
+    # job publish
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host=os.getenv("RABBITMQ_HOST"), port=os.getenv("RABBITMQ_PORT"))
+    )
+    channel = connection.channel()
 
+    channel.queue_declare(queue='task_queue', durable=True)
+
+    message = f'{request_id}'
+    channel.basic_publish(
+        exchange='',
+        routing_key='task_queue',
+        body=message,
+        properties=pika.BasicProperties(
+            delivery_mode=pika.DeliveryMode.Persistent
+        ))
+    connection.close()
+    
     base_url = str(request.base_url).rstrip("/")
     result_url = f"{base_url}/summary/download/{request_id}"
 
