@@ -81,19 +81,6 @@ async def post_summary_request_handler(
 
     request_id = str(uuid.uuid4())
 
-    # 요청 생성
-    new_request = SummaryRequestEntity(
-        req_id = request_id,
-        create_at=datetime.utcnow(),
-        status="running",
-        options=form_data.summary_options
-    )
-    session.add(new_request)
-    session.commit()
-    session.refresh(new_request)
-
-    db_id = str(new_request.id)
-
     # zip파일 unzip 후 저장 dir
     temp_dir = f"temp/{request_id}"
 
@@ -117,6 +104,17 @@ async def post_summary_request_handler(
     file_path = os.path.join(temp_dir, form_data.project_file.filename)
     with open(file_path, "wb") as f:
         f.write(file_bytes)
+        
+    # 요청 생성
+    new_request = SummaryRequestEntity(
+        req_id = request_id,
+        create_at=datetime.utcnow(),
+        status="running",
+        options=form_data.summary_options
+    )
+    session.add(new_request)
+    session.commit()
+    session.refresh(new_request)
 
     # job publish
     connection = pika.BlockingConnection(
