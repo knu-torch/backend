@@ -1,45 +1,82 @@
-from fpdf import FPDF
-import platform
+# utils.py
+
 import os
 import requests
+import markdown
+from weasyprint import HTML
 
-# 폰트 다운로드 URL
-FONT_URL = "https://raw.githubusercontent.com/notofonts/noto-cjk/main/google-fonts/NotoSansKR%5Bwght%5D.ttf"
-
-# 폰트 저장 경로
+# 웹폰트 다운로드 URL
+FONT_URL = "https://fonts.google.com/share?selection.family=Noto+Sans+KR:wght@100..900"
 FONT_DIR = "./fonts"
 FONT_PATH = os.path.join(FONT_DIR, "NotoSansKR-Regular.ttf")
 
 
 def ensure_font():
-    # 폰트 폴더가 없으면 생성
     if not os.path.exists(FONT_DIR):
         os.makedirs(FONT_DIR)
 
-    # 폰트 파일이 없으면 다운로드
     if not os.path.exists(FONT_PATH):
-        print(f"Downloading font from {FONT_URL}...")
+        print("Downloading font...")
         response = requests.get(FONT_URL)
         if response.status_code == 200:
             with open(FONT_PATH, "wb") as f:
                 f.write(response.content)
             print("Font downloaded successfully.")
         else:
-            raise Exception(f"Failed to download font: {response.status_code}")
+            raise Exception(f"Font download failed: {response.status_code}")
 
 
-# pdf 파일 생성 및 저장
-def create_pdf(summary_text: str, output_path: str):
+def create_pdf(markdown_text: str, output_path: str):
     ensure_font()
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
 
-    pdf.add_font("NotoSansKR-Regular", "", FONT_PATH, uni=True)
-    pdf.set_font("NotoSansKR-Regular", size=12)
+    html_body = markdown.markdown(markdown_text, extensions=["extra", "codehilite", "nl2br"])
 
-    for line in summary_text.split('\n'):
-        pdf.multi_cell(0, 10, line)
+    html_template = f"""
+    <html>
+    <head>
+        <style>
+            @font-face {{
+                font-family: "NotoSansKR";
+                src: url("file://{os.path.abspath(FONT_PATH)}") format("opentype");
+            }}
+            body {{
+                font-family: "NotoSansKR", sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+                margin: 2em;
+            }}
+            h1, h2, h3 {{ font-weight: bold; }}
+            code {{
+                background-color: #f4f4f4;
+                padding: 2px 4px;
+                border-radius: 4px;
+            }}
+            pre code {{
+                display: block;
+                padding: 1em;
+                background: #f0f0f0;
+                overflow-x: auto;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 1em 0;
+            }}
+            th, td {{
+                border: 1px solid #ccc;
+                padding: 8px 12px;
+                text-align: left;
+            }}
+            th {{
+                background-color: #f5f5f5;
+            }}
+        </style>
+    </head>
+    <body>
+        {html_body}
+    </body>
+    </html>
+    """
 
-    pdf.output(output_path)
-
+    HTML(string=html_template).write_pdf(output_path)
+    print("PDF generation has been completed.")

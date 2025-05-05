@@ -15,15 +15,20 @@ class SummaryProjectEntity(SQLModel, table=True):
     deploy_info: str = Field(default=None)
 
     def __str__(self):
-        return f""""
-        Project Information
-        
-        id={self.id} 
-        req_id={self.req_id}, 
-        create_at={self.create_at}, 
-        title={self.title}, 
-        libs={self.libs}, 
-        deploy_info={self.deploy_info}
-    """
+        return f"""
+# Project Information
+
+| KEY | VALUE |
+|------|------|
+| ID | {self.id} |
+| REQ ID | {self.req_id} |
+| CREATE AT | {self.create_at} |
+
+---
+\n
+## title\n{self.title}\n
+## libs\n{self.libs}\n
+## deploy_info\n{self.deploy_info}\n      
+"""
 
 
