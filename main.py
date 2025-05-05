@@ -53,9 +53,19 @@ app.include_router(
 
 from worker.worker import worker
 from threading import Thread
+import argparse
+
+
+def start_workers(count: int =2):
+    for _ in range(count):
+        thread = Thread(target=worker)
+        thread.daemon = True
+        thread.start()
 
 if __name__ == "__main__":
-    thread = Thread(target=worker)
-    thread.daemon = True
-    thread.start()
+    parser = argparse.ArgumentParser(description="Start!")
+    parser.add_argument("--workers", type=int, default=2, help="Number of worker threads to start")
+    args = parser.parse_args()
+
+    start_workers(args.workers)
     uvicorn.run(app, host="0.0.0.0", port=8000)
