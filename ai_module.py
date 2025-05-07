@@ -1,7 +1,5 @@
 import os
 import zipfile
-import tkinter as tk
-from tkinter import filedialog
 from google import genai
 from model.enums import summary_options
 from pydantic import BaseModel
@@ -151,6 +149,9 @@ def summarize_code(code_text: str, options: list[summary_options.SummaryOption])
         return {"title": "", "libs": "", "deploy_info": "", "another": f"요약 중 오류 발생: {e}"}
 
 def select_zip_file():
+    import tkinter as tk
+    from tkinter import filedialog
+    
     root = tk.Tk()
     root.withdraw() 
     zip_file_path = filedialog.askopenfilename(
