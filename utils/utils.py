@@ -3,12 +3,15 @@
 import os
 import requests
 import markdown
-from weasyprint import HTML
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
+
 
 # 웹폰트 다운로드 URL
 FONT_URL = "https://fonts.google.com/share?selection.family=Noto+Sans+KR:wght@100..900"
 FONT_DIR = "./fonts"
-FONT_PATH = os.path.join(FONT_DIR, "NotoSansKR-Regular.ttf")
+#FONT_PATH = os.path.join(FONT_DIR, "NotoSansKR-Regular.ttf")
+FONT_PATH = os.path.join(FONT_DIR, "Pretendard-Regular.ttf")
 
 
 def ensure_font():
@@ -34,13 +37,23 @@ def create_pdf(markdown_text: str, output_path: str):
     html_template = f"""
     <html>
     <head>
-        <style>
-            @font-face {{
-                font-family: "NotoSansKR";
-                src: url("file://{os.path.abspath(FONT_PATH)}") format("opentype");
-            }}
+
+    </head>
+    <body>
+        {html_body}
+    </body>
+    </html>
+    """
+    font_config = FontConfiguration()
+    css = CSS(string='''
+            @font-face {
+            font-family: "cfont";
+            src: url("file:///app/Pretendard-Regular.ttf") format("ttf");
+            font-style: normal;
+            }
+
             body {{
-                font-family: "NotoSansKR", sans-serif;
+                font-family: "cfont", sans-serif;
                 font-size: 14px;
                 line-height: 1.6;
                 margin: 2em;
@@ -70,13 +83,9 @@ def create_pdf(markdown_text: str, output_path: str):
             th {{
                 background-color: #f5f5f5;
             }}
-        </style>
-    </head>
-    <body>
-        {html_body}
-    </body>
-    </html>
-    """
 
-    HTML(string=html_template).write_pdf(output_path)
+        ''', font_config=font_config)
+
+
+    HTML(string=html_template).write_pdf(output_path, stylesheets=[css], font_config=font_config)
     print("PDF generation has been completed.")
