@@ -2,7 +2,7 @@ import os
 import requests
 from fastapi import HTTPException
 
-GITHUB_API_TOKEN = os.getenv("GITHUB_API_TOKEN")  # 비공개 리포 접근용
+GITHUB_API_TOKEN = os.getenv("GITHUB_API_TOKEN")
 
 
 def get_default_branch(user: str, repo: str) -> str:
@@ -29,8 +29,7 @@ def resolve_and_download_github_zip(git_url: str, save_path: str):
     branch = get_default_branch(user, repo)
     zip_url = f"https://github.com/{user}/{repo}/archive/refs/heads/{branch}.zip"
 
-    # 실제 다운로드
-    print(f"🔗 Downloading zip from: {zip_url}")
+    print(f"Downloading zip from: {zip_url}")
     response = requests.get(zip_url, timeout=10)
     if response.status_code != 200 or "zip" not in response.headers.get("Content-Type", ""):
         raise HTTPException(400,
@@ -39,4 +38,4 @@ def resolve_and_download_github_zip(git_url: str, save_path: str):
     with open(save_path, "wb") as f:
         f.write(response.content)
 
-    print(f"✅ Saved to {save_path}")
+    print(f"Saved to {save_path}")
