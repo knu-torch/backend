@@ -9,12 +9,18 @@ def test_summary_upload():
     test_zip_path = "tests/sample_project.zip"
     assert os.path.exists(test_zip_path), "테스트용 zip 파일이 존재하지 않습니다."
 
-    summary_options = json.dumps(["ProjectSummary", "DirectorySummary"])
+    summary_options = json.dumps(["ProjectSummary", "DirectorySummary", "FileSummary"])
 
     with open(test_zip_path, "rb") as f:
         response = client.post(
             "/summary",
-            data={"summary_options": summary_options},
+            data={
+                "summary_options": summary_options,
+                "mode": "Github",
+                #"github_url": "https://github.com/octocat/Hello-World/archive/refs/heads/master.zip"
+                "github_url": "https://github.com/knu-torch/backend.git"
+
+            },
             files={"project_file": ("test.zip", f, "application/zip")}
         )
 

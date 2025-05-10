@@ -6,12 +6,15 @@ import zipfile
 from io import BytesIO
 from datetime import datetime
 from sqlmodel import Session, select, or_
+import requests
 
 import pika
 from dotenv import load_dotenv
 
 from model.payload import summary
 from utils.utils import create_pdf
+from utils.github_util import resolve_and_download_github_zip
+
 from ai_module import AI
 from db.connection import SessionDep, engine
 from model.entity.summary_request import SummaryRequestEntity
@@ -44,9 +47,25 @@ async def post_summary_request_handler(
 
     os.makedirs(temp_dir, exist_ok=True)
 
-    file_bytes = await form_data.project_file.read()
-    file_size = len(file_bytes)
+    if form_data.mode == "Zip":
+        file_bytes = await form_data.project_file.read()
+        file_path = os.path.join(temp_dir, form_data.project_file.filename)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+    elif form_data.mode == "Github":
+        if not form_data.github_url:
+            raise HTTPException(status_code=400, detail="github_url is required when mode is 'Github'")
+        try:
+            file_path = os.path.join(temp_dir, form_data.github_url.rstrip("/").removesuffix(".git").split("/")[-1])
+            file_path += ".zip"
 
+            resolve_and_download_github_zip(form_data.github_url, file_path)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"GitHub download failed: {e}")
+
+
+
+    # file_size = len(file_bytes)
     # zip 용량에 따른 처리 차별
     # if file_size <= MAX_MEMORY_ZIP_SIZE:
     #     file_stream = BytesIO(file_bytes)
@@ -59,9 +78,6 @@ async def post_summary_request_handler(
     #     with zipfile.ZipFile(file_path, 'r') as zip_ref:
     #         zip_ref.extractall(temp_dir)
 
-    file_path = os.path.join(temp_dir, form_data.project_file.filename)
-    with open(file_path, "wb") as f:
-        f.write(file_bytes)
         
     # 요청 생성
     new_request = SummaryRequestEntity(
