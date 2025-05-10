@@ -6,3 +6,8 @@ class SummaryOption(str, Enum):
     Package = "DirectorySummary"
     File = "FileSummary"
     Function = "FunctionSummary"
+
+class SummaryInputType(str, Enum):
+    Zip = "Zip"
+    Github = "Github"
+
