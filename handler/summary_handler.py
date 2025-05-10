@@ -12,7 +12,7 @@ import pika
 from dotenv import load_dotenv
 
 from model.payload import summary
-from utils.utils import create_pdf
+from utils.pdf_util import create_pdf
 from utils.github_util import resolve_and_download_github_zip
 
 from ai_module import AI
