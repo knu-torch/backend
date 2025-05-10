@@ -5,6 +5,14 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import logging
+
+logging.basicConfig(
+    level=logging.WARNING,  # or DEBUG
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+
 app = FastAPI(debug=True)
 
 # 허용할 Origin (프론트 주소)
@@ -68,4 +76,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     start_workers(args.workers)
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="warning")
