@@ -14,6 +14,7 @@ class SummaryRequestEntity(SQLModel, table=True):
     file_dir: str = Field(default=None)
     status: str = Field(default="pending") # running, done, failed, pending
     options: dict = Field(sa_column=Column(JSON), default_factory=dict)
+    github_url: str = Field(default=None)
 
     def __str__(self):
         return f"""

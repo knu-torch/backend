@@ -3,9 +3,9 @@
 CREATE TABLE `summary_project` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `create_at` timestamp NOT NULL,
-  `title` varchar(1000) DEFAULT NULL,
-  `libs` varchar(10000) DEFAULT NULL,
-  `deploy_info` varchar(1000) DEFAULT NULL,
+  `title` TEXT DEFAULT NULL,
+  `libs` TEXT DEFAULT NULL,
+  `deploy_info` TEXT DEFAULT NULL,
   `req_id` char(36) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `summary_project_request_FK` (`req_id`),
