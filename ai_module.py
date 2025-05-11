@@ -193,7 +193,7 @@ def analyze_options_separately(zip_path: str, options: list[summary_options.Summ
         result = summarize_code(extracted_code, [option])
         
         if result["title"]:
-            combined_result["title"].append(f"[{option.name} 옵션] {result['title']}")
+            combined_result["title"].append(f"[{option} 옵션] {result['title']}")
         
         if option == summary_options.SummaryOption.Project:
             if result["libs"]:
@@ -202,7 +202,7 @@ def analyze_options_separately(zip_path: str, options: list[summary_options.Summ
                 combined_result["deploy_info"].append(result["deploy_info"])
         
         if result["another"]:
-            combined_result["another"].append(f"[{option.name} 옵션] {result['another']}")
+            combined_result["another"].append(f"[{option} 옵션] {result['another']}")
     
     final_result = {
         "title": "\n\n".join(combined_result["title"]) if combined_result["title"] else "정보 없음",
