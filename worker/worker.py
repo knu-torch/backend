@@ -2,24 +2,30 @@
 import pika
 import time
 import os
+import json
 from dotenv import load_dotenv
 from sqlmodel import Session, select, or_
 
 from model.entity.summary_request import SummaryRequestEntity
 from model.entity.summary_project import SummaryProjectEntity
+from model.enums.summary_options import SummaryInputType
 from db.connection import engine
-from ai_module import AI
+import ai_module, ai_module_git
 
 load_dotenv()
 
 #================================= Run AI ================================
 
-def run_ai(file_dir, options, db_id):
+def run_ai(file_dir, options, db_id, mode, github_url=""):
     summary_result = {}
     status = ""
 
     try:
-        summary_result = AI(file_dir, options)
+        if SummaryInputType(mode) == SummaryInputType.Zip:
+            summary_result = ai_module.AI(file_dir, options)
+        elif SummaryInputType(mode) == SummaryInputType.Github:
+            summary_result = ai_module_git.AI(github_url, options)
+
         status = "done"
         with Session(engine) as session:
             request_obj = session.get(SummaryRequestEntity, int(db_id))
@@ -58,9 +64,12 @@ def run_ai(file_dir, options, db_id):
 
 def callback(ch, method, properties, body):
         print(f" [x] Received {body.decode()}")
-        
-        request_id = body.decode()
-        
+
+        message = json.loads(body.decode())
+        request_id = message["request_id"]
+        mode = message["mode"]
+        github_url = message["github_url"]
+
         with Session(engine) as session:
             request_obj = session.exec(
                 select(SummaryRequestEntity).
@@ -70,7 +79,9 @@ def callback(ch, method, properties, body):
                 file_dir = request_obj.file_dir
                 options = request_obj.options
                 db_id = request_obj.id
-                run_ai(file_dir, options, db_id)
+                run_ai(file_dir, options, db_id, mode, github_url)
+
+
 
         print(" [x] Done")
         ch.basic_ack(delivery_tag=method.delivery_tag)

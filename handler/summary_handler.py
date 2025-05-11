@@ -7,6 +7,7 @@ from io import BytesIO
 from datetime import datetime
 from sqlmodel import Session, select, or_
 import requests
+import json
 
 import pika
 from dotenv import load_dotenv
@@ -19,6 +20,7 @@ from ai_module import AI
 from db.connection import SessionDep, engine
 from model.entity.summary_request import SummaryRequestEntity
 from model.entity.summary_project import SummaryProjectEntity
+from model.enums.summary_options import SummaryInputType
 
 MAX_MEMORY_ZIP_SIZE = 50 * 1024 * 1024
 SUMMARY_RESULT_FILE_NAME = "summary_result.pdf"
@@ -47,22 +49,25 @@ async def post_summary_request_handler(
 
     os.makedirs(temp_dir, exist_ok=True)
 
-    if form_data.mode == "Zip":
+    if SummaryInputType(form_data.mode) == SummaryInputType.Zip:
         file_bytes = await form_data.project_file.read()
         file_path = os.path.join(temp_dir, form_data.project_file.filename)
         with open(file_path, "wb") as f:
             f.write(file_bytes)
-    elif form_data.mode == "Github":
+    elif SummaryInputType(form_data.mode) == SummaryInputType.Github:
         if not form_data.github_url:
             raise HTTPException(status_code=400, detail="github_url is required when mode is 'Github'")
-        try:
-            file_path = os.path.join(temp_dir, form_data.github_url.rstrip("/").removesuffix(".git").split("/")[-1])
-            file_path += ".zip"
+        # try:
+        #     file_path = os.path.join(temp_dir, form_data.github_url.rstrip("/").removesuffix(".git").split("/")[-1])
+        #     file_path += ".zip"
+        #
+        #     resolve_and_download_github_zip(form_data.github_url, file_path)
+        # except Exception as e:
+        #     raise HTTPException(status_code=400, detail=f"GitHub download failed: {e}")
 
-            resolve_and_download_github_zip(form_data.github_url, file_path)
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"GitHub download failed: {e}")
-
+        # 사용 안함
+        file_path = os.path.join(temp_dir, form_data.github_url.rstrip("/").removesuffix(".git").split("/")[-1])
+        # file_path += ".zip"
 
 
     # file_size = len(file_bytes)
@@ -99,11 +104,16 @@ async def post_summary_request_handler(
 
     channel.queue_declare(queue='task_queue', durable=True)
 
-    message = f'{request_id}'
+    message = {
+        "request_id": f"{request_id}",
+        "mode": f"{form_data.mode}",
+        "github_url" : f"{form_data.github_url}"
+    }
+
     channel.basic_publish(
         exchange='',
         routing_key='task_queue',
-        body=message,
+        body=json.dumps(message).encode('utf-8'),
         properties=pika.BasicProperties(
             delivery_mode=pika.DeliveryMode.Persistent
         ))
