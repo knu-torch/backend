@@ -17,8 +17,8 @@ class SummaryRequest(BaseModel):
         cls,
         summary_options: str = Form(...),
         mode: SummaryInputType = Form(...),
-        project_file: UploadFile = File(None),
-        github_url: str = Form(None)
+        project_file: UploadFile | None = File(None),
+        github_url: str | None = Form(None)
     ):
 
         try:
