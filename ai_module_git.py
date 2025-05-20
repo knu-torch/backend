@@ -12,6 +12,7 @@ class Recipe(BaseModel):
     libs: str
     deploy_info: str
     another: str
+    improvements: str  
 
 def setup_gemini():
     os.environ["GEMINI_API_KEY"] = "AIzaSyCpFzXsjw_NP_sSEGpKpsxmVlgVk33KNW4"
@@ -39,7 +40,6 @@ def extract_code_from_repo(repo_path: str) -> str:
     binary_exts = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.ico', '.pdf', '.zip', '.tar', '.gz', '.7z', '.rar']
     
     for root, dirs, files in os.walk(repo_path):
-        # 무시할 디렉토리 필터링
         dirs[:] = [d for d in dirs if d not in ignore_dirs and not d.startswith('.')]
         
         rel_path = os.path.relpath(root, repo_path)
@@ -72,6 +72,7 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
     libs_requirements = []
     deploy_requirements = []
     another_requirements = []
+    improvements_requirements = []  
     
     has_project = summary_options.SummaryOption.Project in options
     has_package = summary_options.SummaryOption.Package in options
@@ -95,19 +96,24 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
         deploy_requirements.append("- 배포 관련 정보를 분석하여 정리 (git action, 서비스 파일, Dockerfile 등의 자동화 빌드 및 배포 정보)")
         deploy_requirements.append("- 설정 파일(config, env 파일) 샘플 및 형식 제공")
         another_requirements.append("- Project 관점: 앞에서 들어가지 않은 중요한 프로젝트 정보")
+        improvements_requirements.append("- 프로젝트 구조, 코드 품질, 보안, 성능, 유지보수성 측면에서 개선 가능한 부분 제안")
+        improvements_requirements.append("- 현대적인 개발 관행과 비교하여 업데이트가 필요한 부분 식별")
 
     if has_package:
         title_requirements.append("- 프로젝트의 각 패키지 역할을 최대 2줄로 요약하고 각 패키지가 담당하는 기능을 명확하게 작성")
         another_requirements.append("- Package 관점: 프로젝트 내부에서 사용되는 패키지들의 의존성 정리 (외부 라이브러리 제외, 내부 패키지 간의 관계만)")
         another_requirements.append("- 패키지 의존성을 트리 구조 또는 표 형태로 표현")
+        improvements_requirements.append("- 패키지 구조 개선점 (의존성 관계, 모듈화, 응집도/결합도 측면)")
     
     if has_file:
         title_requirements.append("- 각 파일 이름과 해당 파일의 기능을 1~2줄로 요약하고 표 형식으로 제공")
         another_requirements.append("- File 관점: 내부 모듈 간 상호작용 분석")
+        improvements_requirements.append("- 파일 구조와 조직에 대한 개선점 (네이밍, 분리, 통합 등)")
     
     if has_function:
         title_requirements.append("- 함수 이름과 해당 함수의 역할을 1~2줄로 요약하고 표 형식으로 제공")
         another_requirements.append("- Function 관점: 함수 간 호출 관계 분석 (가능하면 함수 호출 트리로 표현)")
+        improvements_requirements.append("- 함수 설계, 복잡성, 재사용성, 단일 책임 원칙 준수 등에 대한 개선점")
     
     prompt_parts = []
     
@@ -118,7 +124,8 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
         "  \"title\": \"프로젝트/패키지/파일/함수 요약 (선택된 옵션에 따라)\",\n"
         "  \"libs\": \"라이브러리 정보 (Project 옵션 선택 시)\",\n"
         "  \"deploy_info\": \"배포 관련 정보 (Project 옵션 선택 시)\",\n"
-        "  \"another\": \"기타 중요 정보 (모든 옵션 통합)\"\n"
+        "  \"another\": \"기타 중요 정보 (모든 옵션 통합)\",\n"
+        "  \"improvements\": \"개선점 및 제안사항 (모든 옵션 통합)\"\n" 
         "}\n\n"
         "중요: 모든 옵션에 대한 내용을 통합하여 제공해주세요. 각 필드에 다음 내용을 포함해야 합니다:\n"
     )
@@ -144,6 +151,13 @@ def generate_prompt(options: list[summary_options.SummaryOption], code_text: str
     prompt_parts.append("\n## another 필드 요구사항:")
     for req in another_requirements:
         prompt_parts.append(req)
+    
+    prompt_parts.append("\n## improvements 필드 요구사항:")
+    if improvements_requirements:
+        for req in improvements_requirements:
+            prompt_parts.append(req)
+    else:
+        prompt_parts.append("- 선택된 옵션에 따른 개선점이 없으므로 '해당 없음'으로 표시")
     
     prompt_parts.append(
         "\n\n중요 지침:"
@@ -193,12 +207,13 @@ def summarize_code(code_text: str, options: list[summary_options.SummaryOption])
                     "title": "응답 파싱 오류가 발생했습니다.",
                     "libs": "원본 응답:",
                     "deploy_info": "-",
-                    "another": response[:1000] + "..." if len(response) > 1000 else response
+                    "another": response[:1000] + "..." if len(response) > 1000 else response,
+                    "improvements": "-"  
                 }
         else:
-            return {"title": "", "libs": "", "deploy_info": "", "another": "응답을 받지 못했습니다."}
+            return {"title": "", "libs": "", "deploy_info": "", "another": "응답을 받지 못했습니다.", "improvements": ""}
     except Exception as e:
-        return {"title": "", "libs": "", "deploy_info": "", "another": f"요약 중 오류 발생: {e}"}
+        return {"title": "", "libs": "", "deploy_info": "", "another": f"요약 중 오류 발생: {e}", "improvements": ""}
 
 def get_github_link():
     """GitHub 링크를 사용자로부터 입력받습니다."""
@@ -216,43 +231,48 @@ def get_github_link():
 def analyze_options_separately(github_url: str, options: list[summary_options.SummaryOption]) -> dict:
     repo_path = clone_github_repo(github_url)
     if not repo_path:
-        return {"title": "", "libs": "", "deploy_info": "", "another": "GitHub 저장소 클론에 실패했습니다."}
+        return {"title": "", "libs": "", "deploy_info": "", "another": "GitHub 저장소 클론에 실패했습니다.", "improvements": ""}
     
     try:
         extracted_code = extract_code_from_repo(repo_path)
         
         if extracted_code == "코드 파일이 없습니다.":
-            return {"title": "", "libs": "", "deploy_info": "", "another": "저장소 내에 분석 가능한 코드 파일이 없습니다."}
+            return {"title": "", "libs": "", "deploy_info": "", "another": "저장소 내에 분석 가능한 코드 파일이 없습니다.", "improvements": ""}
         
         combined_result = {
             "title": [],
             "libs": [],
             "deploy_info": [],
-            "another": []
+            "another": [],
+            "improvements": []
         }
 
         for option in options:
             result = summarize_code(extracted_code, [option])
-            
+        
             if result["title"]:
                 combined_result["title"].append(f"[{option} 옵션] {result['title']}")
-            
+        
             if option == summary_options.SummaryOption.Project:
                 if result["libs"]:
                     combined_result["libs"].append(result["libs"])
                 if result["deploy_info"]:
                     combined_result["deploy_info"].append(result["deploy_info"])
-            
+        
             if result["another"]:
                 combined_result["another"].append(f"[{option} 옵션] {result['another']}")
-        
+            
+            if "improvements" in result and result["improvements"]:
+                combined_result["improvements"].append(f"[{option} 옵션] {result['improvements']}")
+    
         final_result = {
             "title": "\n\n".join(combined_result["title"]) if combined_result["title"] else "정보 없음",
             "libs": "\n\n".join(combined_result["libs"]) if combined_result["libs"] else "해당 없음",
             "deploy_info": "\n\n".join(combined_result["deploy_info"]) if combined_result["deploy_info"] else "해당 없음",
-            "another": "\n\n".join(combined_result["another"]) if combined_result["another"] else "정보 없음"
+            "another": "\n\n".join(combined_result["another"]) if combined_result["another"] else "정보 없음",
+            "improvements": "\n\n".join(combined_result["improvements"]) if combined_result["improvements"] else "개선점 없음"
         }
-        
+    
         return final_result
     finally:
         shutil.rmtree(repo_path, ignore_errors=True)
