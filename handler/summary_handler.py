@@ -1,5 +1,5 @@
 from fastapi import Form, APIRouter, UploadFile, File, Request, Depends, BackgroundTasks, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 import uuid
 import os
 import zipfile
@@ -167,6 +167,38 @@ async def get_summary_result(
         pdf_path,
         media_type="application/pdf",
         filename=SUMMARY_RESULT_FILE_NAME
+    )
+
+    response.headers["Status"] = status  # "done" or "running" or "pedding"
+
+    return response
+
+
+@router.get("/download/markdown/{request_id}")
+async def get_summary_markdown(
+        request_id: str,
+        session: SessionDep,
+):
+
+    summary_query = select(SummaryProjectEntity).where(SummaryProjectEntity.req_id == request_id)
+    status_query = select(SummaryRequestEntity.status).where(SummaryRequestEntity.req_id == request_id)
+
+    summary_data = session.exec(summary_query).first()
+    status = session.exec(status_query).first()
+
+    # done일 경우에는 summary_data가 있지만, 아닐 경우에는 summary_data가 비어 있음, AI가 완료되지 않아 db에 값을 넣지 못했기 떄문
+    if not status:
+        raise HTTPException(status_code=404, detail="Request ID not found.")
+
+    pdf_path = f"temp/{request_id}/{SUMMARY_RESULT_FILE_NAME}"
+
+    # if status == 'done':
+    #     create_pdf(str(summary_data), pdf_path)
+    # else:
+    #     create_pdf("", pdf_path)
+
+    response = PlainTextResponse(
+        str(summary_data),
     )
 
     response.headers["Status"] = status  # "done" or "running" or "pedding"
