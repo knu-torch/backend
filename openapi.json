@@ -1,0 +1,188 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/healthCheck": {
+      "get": {
+        "summary": "Healthcheckhandler",
+        "operationId": "healthCheckHandler_api_healthCheck_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/summary": {
+      "post": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "Post Summary Request Handler",
+        "operationId": "post_summary_request_handler_summary_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_post_summary_request_handler_summary_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/summary/download/{request_id}": {
+      "get": {
+        "tags": [
+          "summary"
+        ],
+        "summary": "Get Summary Result",
+        "operationId": "get_summary_result_summary_download__request_id__get",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_post_summary_request_handler_summary_post": {
+        "properties": {
+          "summary_options": {
+            "type": "string",
+            "title": "Summary Options"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/SummaryInputType"
+          },
+          "project_file": {
+            "type": "string",
+            "format": "binary",
+            "title": "Project File"
+          },
+          "github_url": {
+            "type": "string",
+            "title": "Github Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary_options",
+          "mode"
+        ],
+        "title": "Body_post_summary_request_handler_summary_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SummaryInputType": {
+        "type": "string",
+        "enum": [
+          "Zip",
+          "Github"
+        ],
+        "title": "SummaryInputType"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
