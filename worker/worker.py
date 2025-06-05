@@ -21,9 +21,9 @@ def run_ai(file_dir, options, db_id, mode, github_url=""):
     status = ""
 
     try:
-        if SummaryInputType(mode) == SummaryInputType.Zip:
+        if mode.endswith(SummaryInputType.Zip.value):
             summary_result = ai_module.AI(file_dir, options)
-        elif SummaryInputType(mode) == SummaryInputType.Github:
+        elif mode.endswith(SummaryInputType.Github.value):
             summary_result = ai_module_git.AI(github_url, options)
 
         status = "done"

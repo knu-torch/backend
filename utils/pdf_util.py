@@ -48,7 +48,7 @@ def create_pdf(markdown_text: str, output_path: str):
     css = CSS(string='''
             @font-face {
             font-family: "cfont";
-            src: url("file:///app/Pretendard-Regular.ttf") format("ttf");
+            src: url("file:///app/fonts/Pretendard-Regular.ttf") format("ttf");
             font-style: normal;
             }
 
@@ -86,6 +86,8 @@ def create_pdf(markdown_text: str, output_path: str):
 
         ''', font_config=font_config)
 
-
-    HTML(string=html_template).write_pdf(output_path, stylesheets=[css], font_config=font_config)
-    print("PDF generation has been completed.")
+    try:
+        HTML(string=html_template).write_pdf(output_path, stylesheets=[css], font_config=font_config)
+        print("PDF generation has been completed.")
+    except Exception as e:
+        print(f"Error while generating PDF: {e}")
